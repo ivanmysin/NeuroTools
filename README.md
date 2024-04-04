@@ -1,4 +1,5 @@
 # NeuroTools
+
 A Python module for LFP and spikes analysis. It includes a collection of routines for brain signals analysis, circular statistics and spatial maps.
 
 Please read the documentation **here???**.
