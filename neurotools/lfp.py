@@ -1,15 +1,41 @@
+"""NeuroTools core functions for lfp signals processing"""
 import numpy as np
 from scipy.signal import butter, filtfilt, hilbert
 from scipy.signal.windows import parzen
 # from numba import jit
 
-class Butter_bandpass_filter():
+class Butter_bandpass_filter:
+    """
+    Implements the Butterword filter class.
+
+    Attributes
+    ----------
+    lowcut: float
+        Low bound for frequency in Hz
+    highcut: float
+        Upper bound for frequency in Hz
+    fs: float
+        Sampling rate in Hz
+    order: int
+        Order of Butterword filter
+
+    Methods
+    ----------
+    filtrate(numpy.ndarray)
+        Apply filer to signal
+    """
     def __init__(self, lowcut, highcut, fs, order):
         """
-        :param lowcut: float low bound for frequency
-        :param highcut: float upper bound for frequency
-        :param fs: sampling rate
-        :param order: int order of Butterword filter
+        Parameters
+        ----------
+        lowcut: float
+            Low bound for frequency in Hz
+        highcut: float
+            Upper bound for frequency in Hz
+        fs: float
+            Sampling rate in Hz
+        order: int
+            Order of Butterword filter
         """
         self.fs = fs
         self.nyq = self.fs * 0.5
@@ -20,9 +46,17 @@ class Butter_bandpass_filter():
 
     def filtrate(self, lfp):
         """
-        :param lfp: numpy array with raw LFP signal
-        :return: numpy array with filtered LFP signal
+        Parameters
+        ----------
+        lfp: numpy.ndarray
+            Raw LFP signal for filtration
+
+        Returns
+        -------
+        lfp: numpy.ndarray
+            Filtered LFP signal
         """
+
         filtered = filtfilt(self.b, self.a, lfp)
         return filtered
 
@@ -41,27 +75,46 @@ def __clear_artifacts(lfp, win, threshold_std, threshold):
 
 
 def clear_articacts(lfp, win_size=101, threshold_std=10,  tht=0.1):
-    """
-    :param lfp:
-    :param win_size:
-    :param threshold_std:
-    :param tht:
-    :return:
+    """ Remove artifacts from lfp signals.
+
+    Parameters
+    ----------
+    lfp: numpy.ndarray, list
+        Input signal array.
+    win_size: int
+        A length of window in which threshold crossings are defined as a single artifact
+    threshold_std: float
+        Threshold for artifacts detection, means number of std difference from average level
+    tht: float in range (0, 1)
+        Threshold for detect start and end of artifacts.
+        High value will lead to separate management of artifacts.
+        At a low value, close artifacts will be combined into one.
+
+    Returns
+    -------
+    lfp: numpy.ndarray
+        A signal in which segments with artifacts are replaced by low-amplitude noise
     """
     win = parzen(win_size)
     lfp = __clear_artifacts(lfp, win, threshold_std, tht)
     return lfp
 
 
-
-
 #@jit(nopython=True)
 def get_ripples_episodes_indexes(ripples_lfp, fs, threshold=4, accept_win=0.02):
     """
+    Find ripples events in LFP signal
+
+    Parameters
+    ----------
     :param ripples_lfp: сигнал lfp, отфильтрованный в риппл-диапазоне после преобразования Гильберта
     :param fs: частота дискретизации
     :param threshold: порог для определения риппла
     :param accept_win: минимальная длина риппла в сек
+
+    Returns
+    -------
+
     :return:  списки начал и концов риппл событий в единицах, указанных в частоте дискретизации (fs)
     """
 
