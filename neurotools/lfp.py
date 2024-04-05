@@ -31,7 +31,7 @@ def __clear_artifacts(lfp, win, threshold_std, threshold):
     mean_lfp = np.mean(lfp)
     lfp = lfp - mean_lfp
     lfp_std = np.std(lfp)
-    is_large = np.logical_and((lfp > threshold_std * lfp_std), (lfp < -threshold_std * lfp_std))
+    is_large = np.logical_or((lfp > threshold_std * lfp_std), (lfp < -threshold_std * lfp_std))
     is_large = is_large.astype(np.float64)
     is_large = np.convolve(is_large, win)
     is_large = is_large[win.size // 2:-win.size // 2 + 1]
@@ -58,7 +58,7 @@ def clear_articacts(lfp, win_size=101, threshold_std=10,  tht=0.1):
 #@jit(nopython=True)
 def get_ripples_episodes_indexes(ripples_lfp, fs, threshold=4, accept_win=0.02):
     """
-    :param ripples_lfp: сигнал lfp, отфильтрованный в риппл-диапазоне
+    :param ripples_lfp: сигнал lfp, отфильтрованный в риппл-диапазоне после преобразования Гильберта
     :param fs: частота дискретизации
     :param threshold: порог для определения риппла
     :param accept_win: минимальная длина риппла в сек
@@ -92,8 +92,8 @@ def get_ripples_episodes_indexes(ripples_lfp, fs, threshold=4, accept_win=0.02):
 #@jit(nopython=True)
 def get_theta_non_theta_epoches(theta_lfp, delta_lfp, fs, theta_threshold=2, accept_win=2):
     """
-    :param theta_lfp: отфильтрованный в тета-диапазоне LFP
-    :param delta_lfp: отфильтрованный в дельа-диапазоне LFP
+    :param theta_lfp: отфильтрованный в тета-диапазоне LFP после преобразования Гильберта
+    :param delta_lfp: отфильтрованный в дельа-диапазоне LFP после преобразования Гильберта
     :param theta_threshold : порог для отделения тета- от дельта-эпох
     :param accept_win : порог во времени, в котором переход не считается.
     :return: массив индексов начала и конца тета-эпох, другой массив для нетета-эпох

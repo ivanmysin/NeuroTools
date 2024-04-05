@@ -24,4 +24,4 @@ python3 setup.py install
 
 The module is being developed by members of the Laboratory of the Neuron System Organization of the Institute of Theoretical and Experimental Biophysics of the Russian Academy of Sciences, Pushchino
 
-Ivan Mysin, Ivan Mysin, Sergey Dubrovin, Sergey Skorokhod, Artem Vasilev
+Ivan Mysin, Sergey Dubrovin, Sergey Skorokhod, Artem Vasilev
