@@ -107,15 +107,20 @@ def get_ripples_episodes_indexes(ripples_lfp, fs, threshold=4, accept_win=0.02):
 
     Parameters
     ----------
-    :param ripples_lfp: сигнал lfp, отфильтрованный в риппл-диапазоне после преобразования Гильберта
-    :param fs: частота дискретизации
-    :param threshold: порог для определения риппла
-    :param accept_win: минимальная длина риппла в сек
+    ripples_lfp: numpy.ndarray
+        the lfp signal filtered in the ripple range after the Hilbert transform
+    fs: float
+        Sampling rate
+    threshold: float
+        Threshold for ripples detection, means number of std difference from average level. Default value is 4.
+    accept_win: float
+        Minimal ripple length in seconds. Default value is 0.02 sec.
 
     Returns
     -------
-
-    :return:  списки начал и концов риппл событий в единицах, указанных в частоте дискретизации (fs)
+    ripples_epoches: numpy.ndarray with shape (2, n)
+        The array of indexes of the starts and ends of ripple events.
+        n is number of ripples events, first values along 0 axis are starts, second values are ends.
     """
 
     ripples_lfp_th = threshold * np.std(ripples_lfp.real)
@@ -145,16 +150,35 @@ def get_ripples_episodes_indexes(ripples_lfp, fs, threshold=4, accept_win=0.02):
 #@jit(nopython=True)
 def get_theta_non_theta_epoches(theta_lfp, delta_lfp, fs, theta_threshold=2, accept_win=2):
     """
-    :param theta_lfp: отфильтрованный в тета-диапазоне LFP после преобразования Гильберта
-    :param delta_lfp: отфильтрованный в дельа-диапазоне LFP после преобразования Гильберта
-    :param theta_threshold : порог для отделения тета- от дельта-эпох
-    :param accept_win : порог во времени, в котором переход не считается.
-    :return: массив индексов начала и конца тета-эпох, другой массив для нетета-эпох
+    Find theta and non-theta epoches in LFP signal
+
+     Parameters
+    ----------
+    theta_lfp: numpy.ndarray
+        the lfp signal filtered in the theta range after the Hilbert transform
+    delta_lfp: numpy.ndarray
+        the lfp signal filtered in the delta range after the Hilbert transform
+    fs: float
+        Sampling rate
+    theta_threshold: float
+        Threshold for theta epoches detection. In theta epochs, the ratio of theta power to delta power is greater than the threshold.
+        Default value is 2.
+    accept_win: float
+        Minimal theta epoches length in seconds. Default value is 2 sec.
+
+    Returns
+    -------
+    theta_epoches: numpy.ndarray with shape (2, n)
+        The array of indexes of the starts and ends of theta epochs.
+        n is epochs, first values along 0 axis are starts, second values are ends.
+    non_theta_epoches: numpy.ndarray with shape (2, n)
+        The array of indexes of the starts and ends of non-theta epochs.
+        n is number of epochs, first values along 0 axis are starts, second values are ends.
     """
     theta_amplitude = np.abs(theta_lfp)
     delta_amplitude = np.abs(delta_lfp)
 
-    relation = theta_amplitude / delta_amplitude
+    relation = theta_amplitude / (delta_amplitude + 0.0000001)
     #     relation = relation[relation < 20]
     is_up_threshold = relation > theta_threshold
     #     is_up_threshold = stats.zscore(relation) > theta_threshold
