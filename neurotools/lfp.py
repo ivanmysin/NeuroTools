@@ -4,6 +4,7 @@ from scipy.signal import butter, filtfilt, hilbert
 from scipy.signal.windows import parzen
 from scipy.ndimage.filters import convolve1d
 from scipy import stats
+from scipy.special import rel_entr
 from . import circstat
 # from numba import jit
 
@@ -368,35 +369,27 @@ def cossfrequency_phase_phase_coupling(low_fr_signal, high_fr_signal, nmarray, t
     else:
         return coupling
 ########################################################################################
-def get_modulation_index(W4phase, W4ampls, nbins=20):
-    """
-    compule modulation index
+def get_modulation_index(disribution, norm=False):
+    """ Сompule modulation index for phase-amplitude coupling.
+    Kullback–Leibler divergence between uniform and given disribution.
+
+    Parameters
+    ----------
+    disribution: numpy.ndarray
+        Density of circular distribution
+    norm: bool, optional
+        If True density is normed to sum = 1
+
+    Returns
+    ----------
+    modulation_index: float
+        Modulation index
     """
 
-    Nampls = W4ampls.shape[0]
-    Nphs = W4phase.shape[0]
-
-    modulation_index = np.zeros([Nampls, Nphs], dtype=np.float)
+    if norm:
+        disribution = disribution - np.min(disribution)
+        disribution = disribution / np.sum(disribution)
 
     unif = 1.0 / (2 * np.pi)
-
-    ampls = np.abs(W4ampls)
-    phases = np.angle(W4phase)
-    for idx4ampl in range(Nampls):
-        a = ampls[idx4ampl, :]
-        for idx4phase in range(Nphs):
-            p = phases[idx4phase, :]
-
-            distr, _ = np.histogram(p, bins=nbins, weights=a, range=[-np.pi, np.pi], density=True)
-            distr += 0.000000001
-            mi = np.sum(distr * np.log(distr / unif))
-            # distr = distr / np.sum(distr)
-            # mi = -np.mean(distr * np.log(distr) )
-            ##########
-            # x = a * np.cos(p)
-            # y = a * np.sin(p)
-            # mi = np.sqrt(np.sum(x)**2 + np.sum(y)**2) / np.sum(a)
-
-            modulation_index[idx4ampl, idx4phase] = mi
-
+    modulation_index = np.sum(rel_entr(disribution, unif))
     return modulation_index
