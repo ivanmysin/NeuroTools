@@ -2,11 +2,13 @@
 import numpy as np
 from scipy.signal import butter, filtfilt, hilbert
 from scipy.signal.windows import parzen
+from scipy.ndimage.filters import convolve1d
+from scipy import stats
+from . import circstat
 # from numba import jit
 
 class Butter_bandpass_filter:
-    """
-    Implements the Butterword filter class.
+    """ Implements the Butterword filter class.
 
     Attributes
     ----------
@@ -45,7 +47,8 @@ class Butter_bandpass_filter:
         self.b, self.a = butter(N=self.order, Wn=[self.lowcut, self.highcut], btype='bandpass')
 
     def filtrate(self, lfp):
-        """
+        """ Apply filter to the signal
+
         Parameters
         ----------
         lfp: numpy.ndarray
@@ -53,13 +56,13 @@ class Butter_bandpass_filter:
 
         Returns
         -------
-        lfp: numpy.ndarray
+        filtered: numpy.ndarray
             Filtered LFP signal
         """
 
         filtered = filtfilt(self.b, self.a, lfp)
         return filtered
-
+########################################################################################
 # @jit(nopython=True)
 def __clear_artifacts(lfp, win, threshold_std, threshold):
     mean_lfp = np.mean(lfp)
@@ -72,8 +75,6 @@ def __clear_artifacts(lfp, win, threshold_std, threshold):
     is_large = is_large > threshold
     lfp[is_large] = np.random.normal(0, 0.001 * lfp_std, np.sum(is_large)) + mean_lfp
     return lfp
-
-
 def clear_articacts(lfp, win_size=101, threshold_std=10,  tht=0.1):
     """ Remove artifacts from lfp signals.
 
@@ -81,14 +82,17 @@ def clear_articacts(lfp, win_size=101, threshold_std=10,  tht=0.1):
     ----------
     lfp: numpy.ndarray, list
         Input signal array.
-    win_size: int
+    win_size: int, optional
         A length of window in which threshold crossings are defined as a single artifact
-    threshold_std: float
+        Default value is 101
+    threshold_std: float, optional
         Threshold for artifacts detection, means number of std difference from average level
-    tht: float in range (0, 1)
+        Default value is 10
+    tht: float in range (0, 1), optional
         Threshold for detect start and end of artifacts.
         High value will lead to separate management of artifacts.
         At a low value, close artifacts will be combined into one.
+        Default value is 0.1
 
     Returns
     -------
@@ -98,12 +102,11 @@ def clear_articacts(lfp, win_size=101, threshold_std=10,  tht=0.1):
     win = parzen(win_size)
     lfp = __clear_artifacts(lfp, win, threshold_std, tht)
     return lfp
-
+########################################################################################
 
 #@jit(nopython=True)
 def get_ripples_episodes_indexes(ripples_lfp, fs, threshold=4, accept_win=0.02):
-    """
-    Find ripples events in LFP signal
+    """ Find ripples events in LFP signal
 
     Parameters
     ----------
@@ -111,9 +114,9 @@ def get_ripples_episodes_indexes(ripples_lfp, fs, threshold=4, accept_win=0.02):
         the lfp signal filtered in the ripple range after the Hilbert transform
     fs: float
         Sampling rate
-    threshold: float
+    threshold: float, optional
         Threshold for ripples detection, means number of std difference from average level. Default value is 4.
-    accept_win: float
+    accept_win: float, optional
         Minimal ripple length in seconds. Default value is 0.02 sec.
 
     Returns
@@ -146,13 +149,12 @@ def get_ripples_episodes_indexes(ripples_lfp, fs, threshold=4, accept_win=0.02):
     ripples_epoches = np.append(start_idx, end_idx).reshape((2, start_idx.size))
     return ripples_epoches
 
-
+########################################################################################
 #@jit(nopython=True)
 def get_theta_non_theta_epoches(theta_lfp, delta_lfp, fs, theta_threshold=2, accept_win=2):
-    """
-    Find theta and non-theta epoches in LFP signal
+    """ Find theta and non-theta epoches in LFP signal
 
-     Parameters
+    Parameters
     ----------
     theta_lfp: numpy.ndarray
         the lfp signal filtered in the theta range after the Hilbert transform
@@ -160,10 +162,10 @@ def get_theta_non_theta_epoches(theta_lfp, delta_lfp, fs, theta_threshold=2, acc
         the lfp signal filtered in the delta range after the Hilbert transform
     fs: float
         Sampling rate
-    theta_threshold: float
+    theta_threshold: float, optional
         Threshold for theta epoches detection. In theta epochs, the ratio of theta power to delta power is greater than the threshold.
         Default value is 2.
-    accept_win: float
+    accept_win: float, optional
         Minimal theta epoches length in seconds. Default value is 2 sec.
 
     Returns
@@ -230,4 +232,171 @@ def get_theta_non_theta_epoches(theta_lfp, delta_lfp, fs, theta_threshold=2, acc
     non_theta_epoches = np.append(non_theta_start_idx, non_theta_end_idx).reshape((2, non_theta_start_idx.size))
 
     return theta_epoches, non_theta_epoches
+########################################################################################
+def cossfrequency_phase_amp_coupling(phase_signal, amps, phasebins=20, nkernel=15):
+    """ Compute disribution amplitudes by phases of phase_signal
+    Belluscio, M. A., Mizuseki, K., Schmidt, R., Kempter, R. & Buzsáki, G. Cross-Frequency Phase–Phase Coupling between Theta and Gamma Oscillations in the Hippocampus. J. Neurosci. 32, 423–435 (2012).
 
+    Parameters
+    ----------
+    phase_signal: numpy.ndarray
+        The lfp signal filtered in the range of low frequency rhythm. Phase of it are used.
+        The array can contain complex values of the analytical signal.
+    amps: numpy.ndarray
+        The lfp signal filtered in the range of high frequency rhythms.
+    phasebins: int, optional
+        Number of bins for histogram. Default value is 20.
+    nkernel: int, optional
+        Number points in parzen window. It used for smoothing.
+        Default value is 15.
+
+    Returns
+    -------
+    coupling: numpy.ndarray
+        Density of power rhythms (amps) by phases of phase_signal along each axis of amps
+    bins: numpy.ndarray
+        Array of bins.
+    """
+
+    if not np.iscomplex(phase_signal).all():
+        phase_signal = hilbert(phase_signal)
+
+    if not np.iscomplex(amps).all():
+        amps = hilbert(amps)
+
+    if len(amps.shape) == 1:
+        amps = np.reshape(amps, (1, -1))
+
+    phase_signal = np.angle(phase_signal, deg=False)
+    coefAmp = np.abs(amps)
+
+    coefAmp = stats.zscore(coefAmp, axis=1)
+    coupling = np.empty(shape=(coefAmp.shape[0], phasebins), dtype=np.float64)
+
+    kernel = parzen(nkernel)
+    for freq_idx in range(coefAmp.shape[0]):
+        coup, bins = np.histogram(phase_signal, bins=phasebins, weights=coefAmp[freq_idx, :], range=[-np.pi, np.pi])
+        coup = convolve1d(coup, kernel, mode="wrap")
+        coupling[freq_idx, :] = coup
+
+    coupling = coupling / (coupling.max() - coupling.min())
+    bins = np.convolve(bins, [0.5, 0.5], mode='valid')
+
+    return coupling, bins
+
+########################################################################################
+def cossfrequency_phase_phase_coupling(low_fr_signal, high_fr_signal, nmarray, thresh_std=None, circ_distr=False):
+    """ Compute phase-phase coupling (n:m test)
+    Belluscio, M. A., Mizuseki, K., Schmidt, R., Kempter, R. & Buzsáki, G. Cross-Frequency Phase–Phase Coupling between Theta and Gamma Oscillations in the Hippocampus. J. Neurosci. 32, 423–435 (2012).
+
+    Parameters
+    ----------
+    low_fr_signal: numpy.ndarray
+        The lfp signal filtered in the range of low frequency rhythm.
+        The array can contain complex values of the analytical signal.
+    high_fr_signal: numpy.ndarray
+        The lfp signal filtered in the range of high frequency rhythms.
+        The array can contain complex values of the analytical signal.
+    nmarray: numpy.ndarray
+        Coefficients for speed up phases of low frequency signal
+    thresh_std: float or None, optional
+        Means number of std difference from average level.
+        When calculating the coefficient, only points whose amplitude is above the threshold are taken into account
+        If None threshold is not applied. Default value is None.
+    circ_distr: bool, optional
+        If True the function returns circular distributions for each coefficient in nmarray
+        If True the function returns empty list distrs and bins
+
+    Returns
+    -------
+    coupling: numpy.ndarray
+        Coherence of phases for each coefficient in nmarray
+    bins: numpy.ndarray, optional
+        Only returned if circ_distr is True
+        Array of bins.
+    distrs: list of numpy.ndarray, optional
+        Only returned if circ_distr is True
+        Circular distributions of phase differencies for each coefficient in nmarray
+    """
+
+    if not np.iscomplex(low_fr_signal).all():
+        low_fr_analitic_signal = hilbert(low_fr_signal)
+    else:
+        low_fr_analitic_signal = low_fr_signal
+
+    if not np.iscomplex(high_fr_signal).all():
+        high_fr_analitic_signal = hilbert(high_fr_signal)
+    else:
+        high_fr_analitic_signal = high_fr_signal
+
+    coupling = np.zeros(nmarray.size)
+
+    if not thresh_std is None:
+
+        abs_signal = np.abs(low_fr_analitic_signal * high_fr_analitic_signal)
+
+        signif_poits = abs_signal > (np.mean(abs_signal) + thresh_std * np.std(abs_signal))
+
+        low_fr_analitic_signal = low_fr_analitic_signal[signif_poits]
+        high_fr_analitic_signal = high_fr_analitic_signal[signif_poits]
+
+        if low_fr_analitic_signal.size == 0:
+            return coupling
+
+    low_fr_angles = np.angle(low_fr_analitic_signal, deg=False)
+    high_fr_angles = np.angle(high_fr_analitic_signal, deg=False)
+
+    distrs = []
+    bins = []
+    for i in range(nmarray.size):
+
+        vects_angle = low_fr_angles * nmarray[i] - high_fr_angles
+        x_vect = np.cos(vects_angle)
+        y_vect = np.sin(vects_angle)
+        mean_resultant_length = np.sqrt(np.sum(x_vect)**2 + np.sum(y_vect)**2) / vects_angle.size
+        coupling[i] = mean_resultant_length
+
+        if circ_distr:
+            vects_angle = circstat.get_angles_in_range(vects_angle)
+            bins_anles, distr = circstat.circular_distribution(np.ones_like(vects_angle), vects_angle, angle_step=0.1,
+                                                      nkernel=15)
+            distrs.append(distr)
+            bins.append(bins_anles)
+
+    if circ_distr:
+        return coupling, bins, distrs
+    else:
+        return coupling
+########################################################################################
+def get_modulation_index(W4phase, W4ampls, nbins=20):
+    """
+    compule modulation index
+    """
+
+    Nampls = W4ampls.shape[0]
+    Nphs = W4phase.shape[0]
+
+    modulation_index = np.zeros([Nampls, Nphs], dtype=np.float)
+
+    unif = 1.0 / (2 * np.pi)
+
+    ampls = np.abs(W4ampls)
+    phases = np.angle(W4phase)
+    for idx4ampl in range(Nampls):
+        a = ampls[idx4ampl, :]
+        for idx4phase in range(Nphs):
+            p = phases[idx4phase, :]
+
+            distr, _ = np.histogram(p, bins=nbins, weights=a, range=[-np.pi, np.pi], density=True)
+            distr += 0.000000001
+            mi = np.sum(distr * np.log(distr / unif))
+            # distr = distr / np.sum(distr)
+            # mi = -np.mean(distr * np.log(distr) )
+            ##########
+            # x = a * np.cos(p)
+            # y = a * np.sin(p)
+            # mi = np.sqrt(np.sum(x)**2 + np.sum(y)**2) / np.sum(a)
+
+            modulation_index[idx4ampl, idx4phase] = mi
+
+    return modulation_index
