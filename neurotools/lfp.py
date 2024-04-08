@@ -389,7 +389,9 @@ def get_modulation_index(disribution, norm=False):
     if norm:
         disribution = disribution - np.min(disribution)
         disribution = disribution / np.sum(disribution)
+        unif = 1.0 / disribution.size
+    else:
+        unif = 1.0 / (2 * np.pi)
 
-    unif = 1.0 / (2 * np.pi)
     modulation_index = np.sum(rel_entr(disribution, unif))
     return modulation_index

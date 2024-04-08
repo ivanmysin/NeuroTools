@@ -29,7 +29,7 @@ axes[0].set_title("Signal with phase amplitude modulation")
 axes[0].set_xlabel("Time (sec)")
 axes[1].plot(bins, coupling[0, :])
 axes[1].vlines(peak_phase_of_high_rhythm, ymin=np.min(coupling), ymax=np.max(coupling), color="red")
-axes[1].set_title(f"Phase-amplitude coupling. Modulation index is {mi}")
+axes[1].set_title(f"Phase-amplitude coupling. Modulation index is {mi :.2f}")
 axes[1].set_xlabel("Phase (rad)")
 axes[1].set_ylabel("Coupling value")
 
