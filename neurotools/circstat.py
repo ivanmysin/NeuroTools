@@ -7,7 +7,18 @@ from scipy.signal.windows import parzen
 
 def get_angles_in_range(angles):
     """
-    return angles from -pi to pi
+    The function gives the angle values in the range from -pi to pi
+
+    Parameters
+    ----------
+    angles: numpy.ndarray
+        Angles in rads
+
+    Returns
+    -------
+    anles_in_range: numpy.ndarray
+         Angles in range from -pi to pi
+
     """
     two_pi = 2 * np.pi
     anles_in_range = angles % (two_pi)
@@ -18,15 +29,38 @@ def get_angles_in_range(angles):
 
 ################################################################
 #@jit(nopython=True)
-def get_circular_mean_R(filtered_lfp, spike_train, mean_calculation = 'uniform'):
+def get_circular_mean_R(filtered_lfp, spike_train, fs, mean_calculation = 'uniform'):
     """
-    :param filtered_lfp: отфильтрованный в нужном диапазоне LFP
-    :param spike_train: времена импульсов
-    :mean_calculation: способ вычисления циркулярного среднего и R
-    :return: циркулярное среднее и R
+    The function calculates the circular mean and the ray length (R) for spikes and by phase of filtered LFP signal
+
+    Parameters
+    ----------
+    filtered_lfp: numpy.ndarray
+        filtered lfp signal
+
+    spike_train: numpy.ndarray
+        times of spikes
+
+    fs: float
+        sampling rate
+
+    mean_calculation: string, optional
+        If "uniform" all spikes have equal weight.
+        If "normalized" each spike has a weight in accordance with the amplitude of the lfp signal.
+
+    Returns
+    -------
+    circular_mean: float
+         Circular mean
+
+    R: float
+         Ray length
+
     """
     if len(spike_train) == 0:
         return np.nan, np.nan
+
+    spike_train = np.floor(spike_train * fs).astype(np.int64)
 
     if mean_calculation == 'uniform':
         angles = np.angle(np.take(filtered_lfp, spike_train))
@@ -49,7 +83,30 @@ def get_circular_mean_R(filtered_lfp, spike_train, mean_calculation = 'uniform')
 #####################################################################
 def circular_distribution(amples, angles, angle_step, nkernel=15, density=True):
     """
-    return circular distribution smoothed by the parsen kernel
+    The function calculates circular distribution smoothed by the parsen kernel
+
+    Parameters
+    ----------
+    amples: numpy.ndarray
+        amplitudes of vectors
+
+    angles: numpy.ndarray
+        angles in radians
+
+    nkernel: int, optional
+        Number points in parzen window to smooth distribution
+        Default 15
+
+    density: bool, optional
+
+    Returns
+    -------
+    bins: numpy.ndarray
+         bins for circular distribution
+
+    distr: numpy.ndarray
+         smoothed circular distribution
+
     """
     kernel = parzen(nkernel)
     bins = np.arange(-np.pi, np.pi + angle_step, angle_step)
@@ -60,14 +117,8 @@ def circular_distribution(amples, angles, angle_step, nkernel=15, density=True):
 
     return bins, distr
 
-###############################################################
+########################################################################
 
-
-###################################################################
-
-###################################################################
-
-###################################################################
 
 
 

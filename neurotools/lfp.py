@@ -306,7 +306,7 @@ def cossfrequency_phase_phase_coupling(low_fr_signal, high_fr_signal, nmarray, t
         If None threshold is not applied. Default value is None.
     circ_distr: bool, optional
         If True the function returns circular distributions for each coefficient in nmarray
-        If True the function returns empty list distrs and bins
+        If False the function returns empty list distrs and bins
 
     Returns
     -------
