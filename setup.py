@@ -14,7 +14,7 @@ setup(
   long_description_content_type='text/markdown',
   url='https://github.com/ivanmysin/NeuroTools.git',
   packages=find_packages(),
-  install_requires=['numpy>=1.20.0, scipy>=1.12.0, h5py>=3.10.0'],
+  install_requires=['numpy>=1.20.0', 'scipy>=1.12.0'],
   classifiers=[
     'Programming Language :: Python :: 3.10',
     'License :: OSI Approved :: MIT License',
