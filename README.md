@@ -2,9 +2,9 @@
 
 A Python module for LFP and spikes analysis. It includes a collection of routines for brain signals analysis, circular statistics and spatial maps.
 
-Please read the documentation **here???**.
+Please read the documentation https://github.com/ivanmysin/NeuroTools
 
-This module requires NumPy, SciPy, **Numba???**. In addition, you will also need matplotlib to run the examples.
+This module requires NumPy, SciPy. In addition, you will also need matplotlib to run the examples.
 
 The samples scripts illustrates the usage of functions. Results are plotted in figures similar to the sample images.
 
