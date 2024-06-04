@@ -5,14 +5,14 @@ def readme():
     return f.read()
 
 setup(
-  name='neurotools',
+  name='neurotool',
   version='0.0.1',
   author='Ivan Mysin, Sergey Dubrovin, Sergey Skorokhod, Artem Vasilev',
   author_email='imysin@mail.ru',
   description='LFP and spikes processing',
   long_description=readme(),
   long_description_content_type='text/markdown',
-  url='https://github.com/ivanmysin/NeuroTools.git',
+  url='https://github.com/ivanmysin/NeuroTools',
   packages=find_packages(),
   install_requires=['numpy>=1.20.0', 'scipy>=1.12.0'],
   classifiers=[
@@ -22,7 +22,7 @@ setup(
   ],
   keywords='brain rhythms neuron spike lfp place cells hippocampus',
   project_urls={
-    'Documentation': 'link'
+    'Documentation': 'https://github.com/ivanmysin/NeuroTools/tree/master/docs'
   },
   python_requires='>=3.7'
 )

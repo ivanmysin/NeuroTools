@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.signal import hilbert
-import neurotools as nrt
+import neurotool as nrt
 import matplotlib.pyplot as plt
 
 # Generate signal

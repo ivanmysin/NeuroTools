@@ -1,5 +1,5 @@
 import numpy as np
-import neurotools as nrt
+import neurotool as nrt
 import matplotlib.pyplot as plt
 
 #Generate samples

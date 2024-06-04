@@ -1,5 +1,5 @@
 import numpy as np
-import neurotools as nrt
+import neurotool as nrt
 
 
 epoches = [[0, 40], [60, 100]]
