@@ -6,7 +6,7 @@ def readme():
 
 setup(
   name='neurotool',
-  version='0.0.1',
+  version='0.0.2',
   author='Ivan Mysin, Sergey Dubrovin, Sergey Skorokhod, Artem Vasilev',
   author_email='imysin@mail.ru',
   description='LFP and spikes processing',

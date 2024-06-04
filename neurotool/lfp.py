@@ -1,4 +1,4 @@
-"""NeuroTools core functions for lfp signals processing"""
+"""NeuroTool core functions for lfp signals processing"""
 import numpy as np
 from scipy.signal import butter, filtfilt, hilbert
 from scipy.signal.windows import parzen

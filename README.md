@@ -1,4 +1,4 @@
-# NeuroTools
+# NeuroTool
 
 A Python module for LFP and spikes analysis. It includes a collection of routines for brain signals analysis, circular statistics and spatial maps.
 
@@ -13,7 +13,7 @@ The samples scripts illustrates the usage of functions. Results are plotted in f
 We recommend using PyPI to install this package.
 
 ```bash
-python3 -m pip install neurotools
+python3 -m pip install neurotool
 ```
 
 Or, you can download the code and run the below line within the top level folder.
